@@ -1,0 +1,267 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard for Admin
+{% endblock %}
+
+{% block main %}
+
+
+
+
+
+<div id="calendar"></div>
+
+<div class="modal fade" id="list-of-attendees-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/dashboard" method="POST">
+            <div class="modal-header">
+                <h5 class="modal-title">List of attendees</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            
+            <div class="modal-body">
+                <table class="table table-striped">  
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>                
+                            <th>Remaining classes</th>
+                            <th>Attended the class ?</th>  
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                             
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="save-list">Save</button>
+            </div>                
+            <input type="hidden" name="type" value="B">
+            <input type="hidden" name="class-id">
+
+            </form> 
+
+        </div>    
+    </div>
+
+</div>
+
+
+<div class="modal fade" id="event-modal">
+	<div class="modal-dialog">
+       
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Event</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+			</div>
+			<form class="form-horizontal" action="/dashboard" method="POST">
+                <div class="modal-body">
+				             
+                
+				
+                    <input type="hidden" name="event-index">    
+                    
+                    <input type="hidden" name="delete-event" value="0">
+					<div class="form-group row">
+						<label for="event-max_attendance" class="col-sm-4 control-label">Max attendance</label>
+						<div class="col-sm-8">
+							<input id="event-max_attendance" name="event-max_attendance" type="number" class="form-control">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="event-attendance" class="col-sm-4 control-label">Bookings</label>
+						<div class="col-sm-8">
+							<input id="event-attendance" name="event-attendance" type="number" class="form-control" readonly="readonly">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="min-date" class="col-sm-4 control-label">Date and Time </label>
+						<div class="col-sm-8">
+							<div class="input-group date">
+								<input id="event-startDate" name="event-startDate" type="text" class="form-control text-center">
+                                <script>
+                                    $('#event-startDate').datetimepicker({
+                                        timepicker : false, 
+                                        format : 'd-m-Y'                                     
+                                    })
+                                </script>
+                                <input id="event-time" name="event-time" type="text" class="form-control text-center">
+                                <script>
+                                    $('#event-time').datetimepicker({
+                                        datepicker : false,
+                                        allowTimes : [
+                                            '9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '20:00', '20:30',
+                                        ],
+                                        format : 'H:i'
+
+                                    })
+                                </script>
+							</div>
+						</div>
+					</div>
+				</div>
+			
+			    <div class="modal-footer">
+				    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				    <button type="submit" class="btn btn-primary" id="save-event">Save</button>
+			    </div>                
+                <input type="hidden" name="type" value="A">
+            </form>
+		</div>
+	</div>
+</div>
+<div id="context-menu">
+</div>
+
+<script type="text/javascript">
+
+    let calendar = null;
+    
+    
+    function editEvent(event) {
+        $('#event-modal input[name="event-index"]').val(event.id);        
+        var MyDate = event.startDate;
+        var DateFormatted;
+        DateFormatted = ('0' + MyDate.getDate()).slice(-2) + '-' + ('0' + (MyDate.getMonth()+1)).slice(-2) + '-' + MyDate.getFullYear();
+        $('#event-modal input[name="event-startDate"]').val(DateFormatted);
+    
+        $('#event-modal input[name="event-time"]').val(event.time);
+        $('#event-modal input[name="event-max_attendance"]').val(event.max_attendance);
+        $('#event-modal input[name="event-attendance"]').val(event.bookings);
+        $('#event-modal').modal();
+    }
+    
+    function deleteEvent(event) {
+        $('#event-modal input[name="event-index"]').val(event ? event.id : '');
+        $('#event-modal input[name="delete-event"]').val(1);
+        $('#event-modal form').submit();
+    }
+    
+    function ListOfAttendees(event){
+        $.get('/users_constructor/' + event.id , function(users){
+            let html = '';
+            for (var i = 0; i < users.length; i ++){
+                if (users[i].class_attended == '0'){
+                    html += '<tr><td>' + users[i].first_name + '</td><td>' + users[i].last_name + '</td><td>' + users[i].remaining_classes + '</td><td><input type="checkbox" name="attendees" value="' + users[i].id + '"></td></tr>'        
+                }
+                else {
+                    html += '<tr><td>' + users[i].first_name + '</td><td>' + users[i].last_name + '</td><td>' + users[i].remaining_classes + '</td><td><input type="checkbox" name="attendees" checked value="' + users[i].id + '"></td></tr>'
+
+                }
+            }
+            document.querySelector('#list-of-attendees-modal tbody').innerHTML = html;
+            $('#list-of-attendees-modal input[name="class-id"]').val(event.id)
+            $('#list-of-attendees-modal').modal();
+         
+        })
+    }
+    
+
+    function instasubmission(){
+        $('#list-of-attendees-modal form').submit();
+    }
+    
+    
+    
+    $(function() {
+        var currentYear = new Date().getFullYear();
+    
+            
+        calendar = new Calendar('#calendar', { 
+            enableContextMenu: true,
+            enableRangeSelection: true,
+            contextMenuItems:[
+                {
+                    text: 'Update',
+                    click: editEvent
+                },
+                {
+                    text: 'Delete',
+                    click: deleteEvent
+                },
+                {
+                    text: 'See list of attendees',
+                    click: ListOfAttendees
+                }
+            ],
+            selectRange: function(e) {
+                editEvent({ startDate: e.startDate, endDate: e.endDate });
+            },
+            mouseOnDay: function(e) {
+                if(e.events.length > 0) {
+                    var content = '';
+                    
+                    for(var i in e.events) {
+                        content += '<div class="event-tooltip-content">'
+                                        + '<div id="name_shower" class="event-name">' + e.events[i].name + '</div>'   
+                                    + '</div>';
+                        document.querySelector('div').style.color = e.events[i].color;
+                    }
+                
+                    $(e.element).popover({ 
+                        trigger: 'manual',
+                        container: 'body',
+                        html:true,
+                        content: content
+                    });
+                    
+                    $(e.element).popover('show');
+                }
+            },
+           
+    
+            mouseOutDay: function(e) {
+                if(e.events.length > 0) {
+                    $(e.element).popover('hide');
+                }
+            },
+            dayContextMenu: function(e) {
+                $(e.element).popover('hide');
+            },
+                 
+              
+        });
+        
+    
+        
+        
+        $('#save-event').click(function() {
+            $('#event-modal').modal('hide');
+        });
+
+        $('#save-list').click(function() {
+            $('#list-of-attendees-modal').modal('hide');
+        });
+
+        
+        $.get('/class_constructor', function(events){
+            for (var i = 0; i < events.length; i ++){
+                events[i].startDate = new Date (events[i].Date);
+                events[i].endDate = new Date (events[i].Date);
+                events[i].time = events[i].time.slice(0, -3);
+                events[i].name = events[i].time;              
+            }
+            calendar.setDataSource(events);
+        })
+        
+    });
+    
+       
+    
+</script>
+    
+
+{% endblock %}
+`

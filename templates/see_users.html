@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    See users
+{% endblock %}
+
+{% block main %}
+
+
+
+
+<div id="context-menu">
+</div>
+
+<div class="container text-left">
+    <hr>
+    
+    <h4>
+        List of users             
+    </h4>
+    <hr>
+    <h6>
+        Name:
+        <input type="text" class="form-control" placeholder="User last name" id="user_last_name">
+        
+    </h6>
+    <div class="table-responsive" id="table-classes">
+   
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>
+                    First Name
+                </th>
+                <th>
+                    Last Name
+                </th>
+                <th>
+                    Classes Remaining
+                </th>
+                <th>    
+                    Add classes
+                </th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+
+    </table>
+    </form>
+    
+    </div>
+</div>
+
+<script type="text/javascript">
+
+let input = document.getElementById('user_last_name');
+input.addEventListener('keyup', function(){
+    $.get('/users_constructor/GET_ALL/' + input.value, function(users){
+        let html = '';
+        for (var i = 0; i < users.length; i ++){
+            html += '<tr><td>' + users[i].first_name + '</td><td>' + users[i].last_name + '</td><td>'  + users[i].remaining_classes + '</td><td><form method="POST"><input type="number" name="added-classes"> <input type="hidden" name="user-id" value="' + users[i].id + '"><button type="submit" class="btn btn-primary" id="save-list">Add</button></form></td></tr>';      
+        }
+        document.querySelector('tbody').innerHTML = html;
+    })
+})
+
+</script>
+
+
+
+{% endblock %}
